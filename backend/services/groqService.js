@@ -1,0 +1,64 @@
+import Groq from 'groq-sdk';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const groq = process.env.GROQ_API_KEY && process.env.GROQ_API_KEY !== 'your_groq_api_key_here' 
+    ? new Groq({ apiKey: process.env.GROQ_API_KEY })
+    : null;
+
+export const generateExtension = async (prompt) => {
+    if (!groq) {
+        console.warn('GROQ_API_KEY not found or using placeholder. Returning mock extension.');
+        return {
+            "manifest.json": JSON.stringify({
+                "manifest_version": 3,
+                "name": "Mock Extension - " + prompt.substring(0, 20),
+                "version": "1.0",
+                "description": "This is a mock extension because no API key was provided.",
+                "action": { "default_popup": "popup.html" }
+            }, null, 2),
+            "popup.html": "<html><body><h1>AI Demo</h1><p>Prompt: " + prompt + "</p></body></html>"
+        };
+    }
+
+    const systemPrompt = `
+You are an expert Chrome Extension developer.
+Generate a Chrome Extension based on the user's prompt.
+The extension must use Manifest V3.
+The output must be a VALID JSON object where:
+- Keys are the file paths within the extension (e.g., "manifest.json", "content.js", "popup/popup.html").
+- Values are the STRING content of those files.
+
+CRITICAL REQUIREMENTS:
+1. "manifest.json" MUST be present.
+2. No external remote scripts.
+3. Use modern JavaScript.
+4. If icons are needed, provide instructions in a README.md or use placeholder shapes in CSS/HTML if applicable, but focus on the functional code.
+5. The JSON must be parseable. Do not include any text outside the JSON object.
+
+Example Output:
+{
+  "manifest.json": "{...}",
+  "content.js": "console.log('hello');",
+  ...
+}
+`;
+
+    const response = await groq.chat.completions.create({
+        messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt }
+        ],
+        model: 'llama-3.3-70b-versatile',
+        response_format: { type: 'json_object' }
+    });
+
+    try {
+        const content = response.choices[0].message.content;
+        return JSON.parse(content);
+    } catch (error) {
+        console.error('Failed to parse Groq response:', error);
+        throw new Error('Invalid AI response format');
+    }
+};
