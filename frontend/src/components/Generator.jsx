@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Sparkles, Download, Loader2, AlertCircle, CheckCircle2, FileCode, Zap } from 'lucide-react';
+import { Sparkles, Download, Loader2, AlertCircle, CheckCircle2, FileCode, Zap, Globe } from 'lucide-react';
 import FileViewerModal from './FileViewerModal';
 import toast from 'react-hot-toast';
 
@@ -13,6 +14,10 @@ const Generator = ({ activeChat, onGenerationComplete, initialPrompt }) => {
   const [generatedFiles, setGeneratedFiles] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState(null);
+  const [auditData, setAuditData] = useState(null);
+  const [listingData, setListingData] = useState(null);
+  const [toolLoading, setToolLoading] = useState(null); // 'audit', 'listing', or 'publish'
+  const [isPublished, setIsPublished] = useState(false);
 
   useEffect(() => {
     if (activeChat) {
@@ -21,6 +26,9 @@ const Generator = ({ activeChat, onGenerationComplete, initialPrompt }) => {
       setCurrentChatId(activeChat.id);
       setSuccess(true);
       setError(null);
+      setAuditData(null);
+      setListingData(null);
+      setIsPublished(activeChat.is_public || false);
     } else if (initialPrompt) {
       setPrompt(initialPrompt);
       setGeneratedFiles(null);
@@ -36,7 +44,47 @@ const Generator = ({ activeChat, onGenerationComplete, initialPrompt }) => {
     }
   }, [activeChat, initialPrompt]);
 
+  const handleAudit = async () => {
+    setToolLoading('audit');
+    try {
+      const response = await axios.get(`http://localhost:5000/api/chats/history/${currentChatId}/audit`, { withCredentials: true });
+      setAuditData(response.data);
+      toast.success('Security audit complete!');
+    } catch (err) {
+      toast.error('Audit failed.');
+    } finally {
+      setToolLoading(null);
+    }
+  };
+
+  const handleGenerateListing = async () => {
+    setToolLoading('listing');
+    try {
+      const response = await axios.get(`http://localhost:5000/api/chats/history/${currentChatId}/store-listing`, { withCredentials: true });
+      setListingData(response.data);
+      toast.success('Store listing generated!');
+    } catch (err) {
+      toast.error('Listing generation failed.');
+    } finally {
+      setToolLoading(null);
+    }
+  };
+
+  const handlePublish = async () => {
+    setToolLoading('publish');
+    try {
+      await axios.post(`http://localhost:5000/api/chats/history/${currentChatId}/publish`, {}, { withCredentials: true });
+      setIsPublished(true);
+      toast.success('Extension shared to Gallery!');
+    } catch (err) {
+      toast.error('Publishing failed.');
+    } finally {
+      setToolLoading(null);
+    }
+  };
+
   const handleDownload = async (chatId) => {
+// ... existing download logic ...
     try {
       const response = await axios.get(
         `http://localhost:5000/api/chats/history/${chatId}/download`,
@@ -145,29 +193,154 @@ const Generator = ({ activeChat, onGenerationComplete, initialPrompt }) => {
       </div>
 
       {success && !loading && (
-        <div className="glass-card border-green-200 bg-green-50/50 p-6 flex flex-col md:flex-row items-center justify-between gap-6 animate-in slide-in-from-top-4">
-          <div className="flex items-start gap-4 text-green-800">
-            <CheckCircle2 className="shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold">Generation Complete!</p>
-              <p className="text-sm opacity-90">Files are ready and downloaded.</p>
+        <div className="space-y-6 animate-in slide-in-from-top-4 duration-500">
+          <div className="glass-card border-green-200 bg-green-50/50 p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-start gap-4 text-green-800">
+              <CheckCircle2 className="shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold">Generation Complete!</p>
+                <p className="text-sm opacity-90">Files are ready and downloaded.</p>
+              </div>
+            </div>
+            <div className="flex gap-3 w-full md:w-auto">
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-white border border-green-200 text-green-700 font-semibold hover:bg-green-100 transition-colors"
+              >
+                <FileCode size={18} />
+                View Files & Simulator
+              </button>
+              <button 
+                onClick={() => handleDownload(currentChatId)}
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors shadow-lg shadow-green-500/20"
+              >
+                <Download size={18} />
+                Redownload
+              </button>
             </div>
           </div>
-          <div className="flex gap-3 w-full md:w-auto">
-            <button 
-              onClick={() => setIsModalOpen(true)}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-white border border-green-200 text-green-700 font-semibold hover:bg-green-100 transition-colors"
-            >
-              <FileCode size={18} />
-              View Files
-            </button>
-            <button 
-              onClick={() => handleDownload(currentChatId)}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors shadow-lg shadow-green-500/20"
-            >
-              <Download size={18} />
-              Redownload
-            </button>
+
+          {/* Extension Lab - Advanced Tools */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+             {/* Security Audit */}
+             <div className="glass-card p-6 space-y-4 bg-white/40">
+                <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-2 text-slate-900 font-bold">
+                      <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg">
+                        <AlertCircle size={18} />
+                      </div>
+                      Security Audit
+                   </div>
+                   {!auditData && (
+                     <button 
+                       onClick={handleAudit}
+                       disabled={toolLoading === 'audit'}
+                       className="text-xs font-black uppercase text-indigo-600 hover:underline disabled:opacity-50"
+                     >
+                       {toolLoading === 'audit' ? 'Auditing...' : 'Run Audit'}
+                     </button>
+                   )}
+                </div>
+
+                {auditData ? (
+                  <div className="space-y-3 animate-in fade-in">
+                     <div className={`px-2 py-1 rounded-md text-[10px] font-black uppercase inline-block ${
+                       auditData.riskLevel === 'Low' ? 'bg-green-100 text-green-700' : 
+                       auditData.riskLevel === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                     }`}>
+                       Risk Level: {auditData.riskLevel}
+                     </div>
+                     <p className="text-xs text-slate-600 leading-relaxed font-medium">{auditData.summary}</p>
+                     <div className="space-y-1">
+                        <p className="text-[10px] font-black text-slate-400 uppercase">Suggestions:</p>
+                        {auditData.suggestions.slice(0, 2).map((s, i) => (
+                           <div key={i} className="flex items-center gap-2 text-[11px] text-slate-700 font-bold">
+                             <div className="w-1 h-1 bg-indigo-400 rounded-full" /> {s}
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 font-medium">Analyze your extension's permissions and manifest for security risks before publishing.</p>
+                )}
+             </div>
+
+             {/* Store Listing */}
+             <div className="glass-card p-6 space-y-4 bg-white/40">
+                <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-2 text-slate-900 font-bold">
+                      <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg">
+                        <Sparkles size={18} />
+                      </div>
+                      Store Listing
+                   </div>
+                   {!listingData && (
+                     <button 
+                       onClick={handleGenerateListing}
+                       disabled={toolLoading === 'listing'}
+                       className="text-xs font-black uppercase text-indigo-600 hover:underline disabled:opacity-50"
+                     >
+                       {toolLoading === 'listing' ? 'Generating...' : 'Create Listing'}
+                     </button>
+                   )}
+                </div>
+
+                {listingData ? (
+                  <div className="space-y-2 animate-in fade-in">
+                     <h4 className="text-sm font-black text-slate-800">{listingData.title}</h4>
+                     <p className="text-xs text-slate-500 font-medium line-clamp-2 italic">"{listingData.shortDescription}"</p>
+                     <div className="flex flex-wrap gap-1">
+                        {listingData.marketingTags.slice(0, 3).map((tag, i) => (
+                          <span key={i} className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">#{tag}</span>
+                        ))}
+                     </div>
+                     <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(`Title: ${listingData.title}\n\nDescription: ${listingData.longDescription}`);
+                          toast.success('Listing copied!');
+                        }}
+                        className="text-[10px] font-black text-indigo-600 hover:underline uppercase"
+                     >
+                       Copy Full Listing
+                     </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 font-medium">Automatically generate a professional Chrome Web Store title, description, and marketing tags.</p>
+                )}
+             </div>
+
+             {/* Community Gallery Card */}
+             <div className="glass-card p-6 space-y-4 bg-white/40">
+                <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-2 text-slate-900 font-bold">
+                      <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                        <Globe size={18} />
+                      </div>
+                      Community Gallery
+                   </div>
+                   {!isPublished && (
+                     <button 
+                       onClick={handlePublish}
+                       disabled={toolLoading === 'publish'}
+                       className="text-xs font-black uppercase text-indigo-600 hover:underline disabled:opacity-50"
+                     >
+                       {toolLoading === 'publish' ? 'Sharing...' : 'Publish'}
+                     </button>
+                   )}
+                </div>
+
+                {isPublished ? (
+                  <div className="space-y-3 animate-in fade-in">
+                     <div className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-[10px] font-black uppercase inline-block">
+                        Published to Gallery
+                     </div>
+                     <p className="text-xs text-slate-600 leading-relaxed font-medium">Your extension is now visible to the community! Others can see your prompt and remix it.</p>
+                     <Link to="/dashboard/gallery" className="text-[10px] font-black text-indigo-600 hover:underline uppercase block">View in Gallery</Link>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 font-medium">Share your creation with the community. Others will be able to view and remix your extension idea.</p>
+                )}
+             </div>
           </div>
         </div>
       )}

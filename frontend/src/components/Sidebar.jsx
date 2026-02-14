@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MessageSquare, Plus, Search, Loader2, User, LogOut, Settings, Zap, Book } from 'lucide-react';
+import { MessageSquare, Plus, Search, Loader2, User, LogOut, Settings, Zap, Book, Globe } from 'lucide-react';
 
 const Sidebar = ({ history, onSelectChat, activeChatId, loading, user, onLogout }) => {
   const navigate = useNavigate();
@@ -8,19 +8,24 @@ const Sidebar = ({ history, onSelectChat, activeChatId, loading, user, onLogout 
   const initials = username.substring(0, 2).toUpperCase();
 
   return (
-    <aside className="w-80 glass-sidebar flex flex-col h-full z-20">
+    <div className="w-80 h-screen flex flex-col bg-white/70 border-r border-slate-200 backdrop-blur-md relative z-[50]">
       {/* Header */}
       <div className="p-6">
-        <button 
+        <div 
           onClick={() => {
             onSelectChat(null);
             navigate('/dashboard');
           }}
-          className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-500/20"
+          className="flex items-center gap-3 cursor-pointer group"
         >
-          <Plus size={20} />
-          New Extension
-        </button>
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-600/20 group-hover:scale-105 transition-transform">
+            <Zap fill="white" size={20} />
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-slate-900 tracking-tight">Extension<span className="text-indigo-600">AI</span></h1>
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Build in seconds</p>
+          </div>
+        </div>
       </div>
 
       {/* Search & History omitted for brevity, but kept in full file */}
@@ -40,6 +45,13 @@ const Sidebar = ({ history, onSelectChat, activeChatId, loading, user, onLogout 
           Platform
         </div>
         <Link 
+          to="/dashboard/gallery"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/60 text-slate-600 hover:text-slate-900 transition-all font-medium"
+        >
+          <Globe size={18} className="text-blue-500" />
+          Community Gallery
+        </Link>
+        <Link 
           to="/dashboard/templates"
           className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/60 text-slate-600 hover:text-slate-900 transition-all font-medium"
         >
@@ -50,7 +62,7 @@ const Sidebar = ({ history, onSelectChat, activeChatId, loading, user, onLogout 
           to="/dashboard/docs"
           className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/60 text-slate-600 hover:text-slate-900 transition-all font-medium"
         >
-          <Book className="text-blue-500" size={18} />
+          <Book className="text-emerald-500" size={18} />
           Documentation
         </Link>
 
@@ -117,7 +129,7 @@ const Sidebar = ({ history, onSelectChat, activeChatId, loading, user, onLogout 
           Logout
         </button>
       </div>
-    </aside>
+    </div>
   );
 };
 

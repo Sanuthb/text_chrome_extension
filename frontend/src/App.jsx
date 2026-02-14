@@ -10,6 +10,7 @@ import ResetPassword from './pages/ResetPassword';
 import ProfilePage from './pages/ProfilePage';
 import TemplatesPage from './pages/TemplatesPage';
 import DocumentationPage from './pages/DocumentationPage';
+import GalleryPage from './pages/GalleryPage';
 import Generator from './components/Generator';
 import { Loader2 } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
@@ -120,6 +121,14 @@ function App() {
                   <Route path="templates" element={
                     <TemplatesPage 
                       onSelectTemplate={(prompt) => {
+                        handleSelectTemplate(prompt);
+                        // Navigation handled in TemplatesPage or via index redirect
+                      }} 
+                    />
+                  } />
+                  <Route path="gallery" element={
+                    <GalleryPage 
+                      onRemix={(prompt) => {
                         handleSelectTemplate(prompt);
                       }} 
                     />

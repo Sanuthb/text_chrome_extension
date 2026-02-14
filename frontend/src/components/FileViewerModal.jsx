@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { X, FileText, ChevronRight, Copy, Check } from 'lucide-react';
+import { X, FileText, ChevronRight, Copy, Check, Eye, Code } from 'lucide-react';
+import Simulator from './Simulator';
 import toast from 'react-hot-toast';
 
 const FileViewerModal = ({ isOpen, onClose, files }) => {
   const [selectedFile, setSelectedFile] = useState(Object.keys(files || {})[0]);
   const [copied, setCopied] = useState(false);
+  const [viewMode, setViewMode] = useState('code'); // 'code' or 'simulator'
 
   if (!isOpen || !files) return null;
 
@@ -28,15 +30,38 @@ const FileViewerModal = ({ isOpen, onClose, files }) => {
       <div className="glass-card w-full max-w-6xl h-[80vh] flex flex-col bg-white overflow-hidden relative z-10 shadow-2xl border-white/20">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white/50">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
-              <FileText size={20} />
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                <FileText size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900">Extension Files</h3>
+                <p className="text-xs text-slate-500 font-medium">{fileList.length} files generated</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-slate-900">Extension Files</h3>
-              <p className="text-xs text-slate-500 font-medium">{fileList.length} files generated</p>
+
+            {/* View Mode Switcher */}
+            <div className="flex bg-slate-100 p-1 rounded-xl">
+               <button 
+                 onClick={() => setViewMode('code')}
+                 className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                   viewMode === 'code' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                 }`}
+               >
+                 <Code size={14} /> Code
+               </button>
+               <button 
+                 onClick={() => setViewMode('simulator')}
+                 className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                   viewMode === 'simulator' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                 }`}
+               >
+                 <Eye size={14} /> Simulator
+               </button>
             </div>
           </div>
+
           <button 
             onClick={onClose}
             className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
@@ -47,42 +72,50 @@ const FileViewerModal = ({ isOpen, onClose, files }) => {
 
         {/* Content Area */}
         <div className="flex-1 flex overflow-hidden">
-          {/* File Sidebar */}
-          <div className="w-64 border-r border-slate-100 bg-slate-50/50 overflow-y-auto">
-            <div className="p-3 space-y-1">
-              {fileList.map((filename) => (
-                <button
-                  key={filename}
-                  onClick={() => setSelectedFile(filename)}
-                  className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    selectedFile === filename
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                      : 'text-slate-600 hover:bg-white hover:text-slate-900'
-                  }`}
-                >
-                  <ChevronRight size={14} className={selectedFile === filename ? 'opacity-100' : 'opacity-0'} />
-                  <span className="truncate">{filename}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+          {viewMode === 'code' ? (
+            <>
+              {/* File Sidebar */}
+              <div className="w-64 border-r border-slate-100 bg-slate-50/50 overflow-y-auto">
+                <div className="p-3 space-y-1">
+                  {fileList.map((filename) => (
+                    <button
+                      key={filename}
+                      onClick={() => setSelectedFile(filename)}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        selectedFile === filename
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                          : 'text-slate-600 hover:bg-white hover:text-slate-900'
+                      }`}
+                    >
+                      <ChevronRight size={14} className={selectedFile === filename ? 'opacity-100' : 'opacity-0'} />
+                      <span className="truncate">{filename}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          {/* Editor/Viewer */}
-          <div className="flex-1 flex flex-col bg-slate-900 overflow-hidden">
-             <div className="px-4 py-2 bg-slate-800 flex items-center justify-between border-b border-slate-700">
-                <span className="text-xs font-mono text-slate-400">{selectedFile}</span>
-                <button 
-                  onClick={handleCopy}
-                  className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-white transition-colors"
-                >
-                  {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-                  {copied ? 'Copied' : 'Copy Code'}
-                </button>
-             </div>
-             <pre className="flex-1 p-6 overflow-auto font-mono text-sm leading-relaxed text-indigo-200/90 selection:bg-indigo-500/30">
-                <code>{currentContent}</code>
-             </pre>
-          </div>
+              {/* Editor/Viewer */}
+              <div className="flex-1 flex flex-col bg-slate-900 overflow-hidden">
+                 <div className="px-4 py-2 bg-slate-800 flex items-center justify-between border-b border-slate-700">
+                    <span className="text-xs font-mono text-slate-400">{selectedFile}</span>
+                    <button 
+                      onClick={handleCopy}
+                      className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-white transition-colors"
+                    >
+                      {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                      {copied ? 'Copied' : 'Copy Code'}
+                    </button>
+                 </div>
+                 <pre className="flex-1 p-6 overflow-auto font-mono text-sm leading-relaxed text-indigo-200/90 selection:bg-indigo-500/30">
+                    <code>{currentContent}</code>
+                 </pre>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 p-8 bg-slate-50">
+               <Simulator files={files} />
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,56 @@
 import { supabase } from '../utils/supabaseClient.js';
-import { generateExtension } from '../services/groqService.js';
+import { generateExtension, auditManifest, generateStoreListing } from '../services/groqService.js';
 import { buildExtensionZip, cleanupTempDir } from '../services/extensionBuilder.js';
+
+export const publishChat = async (req, res) => {
+    try {
+        const { error } = await supabase
+            .from('chats')
+            .update({ is_public: true })
+            .eq('id', req.params.id)
+            .eq('user_id', req.user.id);
+
+        if (error) throw error;
+        res.json({ message: 'Extension published to gallery!' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export const getPublicChats = async (req, res) => {
+    try {
+        // We try a robust select including profiles, but fall back if it fails
+        const { data, error } = await supabase
+            .from('chats')
+            .select(`
+                id, 
+                title, 
+                prompt, 
+                files, 
+                created_at, 
+                user_id,
+                profiles:user_id ( full_name )
+            `)
+            .eq('is_public', true)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.log('Join with profiles failed, attempting direct select...');
+            const { data: simpleData, error: simpleError } = await supabase
+                .from('chats')
+                .select('id, title, prompt, files, created_at, user_id')
+                .eq('is_public', true)
+                .order('created_at', { ascending: false });
+            
+            if (simpleError) throw simpleError;
+            return res.json(simpleData);
+        }
+        
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 
 export const generate = async (req, res) => {
     const { prompt } = req.body;
@@ -105,6 +155,62 @@ export const deleteChat = async (req, res) => {
         if (error) throw error;
         res.json({ message: 'Chat deleted successfully' });
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export const auditChat = async (req, res) => {
+    try {
+        console.log(`Auditing chat ID: ${req.params.id}`);
+        const { data: chat, error } = await supabase
+            .from('chats')
+            .select('files')
+            .eq('id', req.params.id)
+            .eq('user_id', req.user.id)
+            .single();
+
+        if (error || !chat) {
+            console.error('Audit failed: Chat not found', error);
+            return res.status(404).json({ error: 'Chat not found' });
+        }
+
+        const manifest = chat.files['manifest.json'];
+        if (!manifest) {
+            console.error('Audit failed: manifest.json missing in chat files');
+            return res.status(400).json({ error: 'Manifest not found in this extension' });
+        }
+
+        console.log('Manifest found, starting AI audit...');
+        const auditReport = await auditManifest(manifest);
+        console.log('AI audit complete.');
+        res.json(auditReport);
+    } catch (error) {
+        console.error('Audit endpoint error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export const getStoreListing = async (req, res) => {
+    try {
+        console.log(`Generating store listing for chat ID: ${req.params.id}`);
+        const { data: chat, error } = await supabase
+            .from('chats')
+            .select('prompt, files')
+            .eq('id', req.params.id)
+            .eq('user_id', req.user.id)
+            .single();
+
+        if (error || !chat) {
+            console.error('Store listing failed: Chat not found', error);
+            return res.status(404).json({ error: 'Chat not found' });
+        }
+
+        console.log('Chat data fetched, starting listing generation...');
+        const listing = await generateStoreListing(chat.prompt, chat.files);
+        console.log('Listing generation complete.');
+        res.json(listing);
+    } catch (error) {
+        console.error('Listing endpoint error:', error);
         res.status(500).json({ error: error.message });
     }
 };

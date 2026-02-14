@@ -62,3 +62,54 @@ Example Output:
         throw new Error('Invalid AI response format');
     }
 };
+
+export const auditManifest = async (manifestContent) => {
+    try {
+        const response = await groq.chat.completions.create({
+            messages: [
+                {
+                    role: "system",
+                    content: "You are a Chrome Extension Security Auditor. Analyze the provided manifest.json and provide a security report in JSON format. Identify: 1. Over-privileged permissions (e.g. all_urls when activeTab suffices). 2. Potential security risks. 3. Suggestions for minimal permissions. Output only valid JSON with keys: 'riskLevel' (Low/Medium/High), 'issues' (array of strings), 'suggestions' (array of strings), 'summary' (string)."
+                },
+                {
+                    role: "user",
+                    content: manifestContent
+                }
+            ],
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.2,
+            response_format: { type: "json_object" }
+        });
+
+        return JSON.parse(response.choices[0].message.content);
+    } catch (error) {
+        console.error('Audit error:', error);
+        throw new Error('Failed to audit manifest: ' + error.message);
+    }
+};
+
+export const generateStoreListing = async (prompt, files) => {
+    try {
+        const fileList = Object.keys(files).join(', ');
+        const response = await groq.chat.completions.create({
+            messages: [
+                {
+                    role: "system",
+                    content: "You are a Copywriter for the Chrome Web Store. Based on the extension prompt and file list, generate a store listing package in JSON format. Include: 'title' (catchy name), 'shortDescription' (max 132 chars), 'longDescription' (detailed features/benefits), 'marketingTags' (array), 'changelog' (version 1.0.0 details). Output only valid JSON."
+                },
+                {
+                    role: "user",
+                    content: `Extension Prompt: ${prompt}\nFiles generated: ${fileList}`
+                }
+            ],
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.7,
+            response_format: { type: "json_object" }
+        });
+
+        return JSON.parse(response.choices[0].message.content);
+    } catch (error) {
+        console.error('Listing generation error:', error);
+        throw new Error('Failed to generate store listing: ' + error.message);
+    }
+};
