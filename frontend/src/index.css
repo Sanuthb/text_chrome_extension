@@ -1,20 +1,66 @@
 @import "tailwindcss";
 
+@theme {
+  /* Energetic Theme Mapping - Overrides default tailwind colors to avoid hunting down every class */
+  
+  /* Primary Actions & Accents (Orange: #F4976C) */
+  --color-indigo-50: #feece5;
+  --color-indigo-100: #fde0d1;
+  --color-indigo-200: #fac5ab;
+  --color-indigo-300: #f7a57f;
+  --color-indigo-400: #f5885a;
+  --color-indigo-500: #f4723c;
+  --color-indigo-600: #F4976C; /* Main Action Color */
+  --color-indigo-700: #e55a1d;
+  --color-indigo-800: #cd4a12;
+  --color-indigo-900: #a73f11;
+  --color-indigo-950: #5a1d05;
+
+  /* Secondary Actions / Success (Yellow: #FBE8A6) */
+  --color-purple-50: #fdfae8;
+  --color-purple-100: #fdf5d3;
+  --color-purple-200: #fbeea9;
+  --color-purple-300: #fae175;
+  --color-purple-400: #f9d345;
+  --color-purple-500: #FBE8A6; /* Secondary Main */
+  --color-purple-600: #d89e08;
+  --color-purple-700: #b37309;
+  --color-purple-800: #935b0e;
+  --color-purple-900: #7a4b11;
+
+  /* Backgrounds & Light UI (Light Cyan: #D2FDFF & Light Blue: #B4DFE5) */
+  --color-slate-50: #D2FDFF; /* Page Background */
+  --color-slate-100: #B4DFE5; /* Cards and secondary backgrounds */
+  --color-slate-200: #9cd1da; /* Borders */
+  --color-slate-300: #7ebbc8;
+  
+  /* Text & Dark UI (Deep Blue: #303C6C) */
+  --color-slate-400: #65adbd;
+  --color-slate-500: #4a8d9e;
+  --color-slate-600: #3c7283;
+  --color-slate-700: #325e6d;
+  --color-slate-800: #303C6C; /* Secondary Text */
+  --color-slate-900: #202848; /* Main Text */
+  --color-slate-950: #12172b;
+
+  /* Map standard blues to the custom blue to ensure consistency */
+  --color-blue-500: #B4DFE5;
+  --color-blue-600: #303C6C;
+}
+
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+  --glass-bg: rgba(210, 253, 255, 0.7); /* Tinted with Light Cyan */
+  --glass-border: rgba(48, 60, 108, 0.1); /* Deep Blue border */
+  --glass-shadow: 0 8px 32px 0 rgba(48, 60, 108, 0.1); /* Deep Blue shadow */
 }
 
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Roboto Slab', serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f8fafc;
-  color: #1e293b;
+  background-color: var(--color-slate-50);
+  color: var(--color-slate-900);
 }
 
 @layer components {

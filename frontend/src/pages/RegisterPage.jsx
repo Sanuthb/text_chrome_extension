@@ -23,8 +23,8 @@ const RegisterPage = () => {
         password 
       });
       setSuccess(true);
-      toast.success('Check your email for verification!');
-      setTimeout(() => navigate('/login'), 4000);
+      toast.success('Registration successful! Redirecting to login...');
+      setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Registration failed. Please try again.');
     } finally {
@@ -61,8 +61,8 @@ const RegisterPage = () => {
                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
                   <CheckCircle2 size={48} />
                </div>
-               <h3 className="text-2xl font-bold text-slate-900 mb-2">Verification Sent!</h3>
-               <p className="text-slate-500 font-medium">Please check your email to verify your account. Redirecting you to login...</p>
+               <h3 className="text-2xl font-bold text-slate-900 mb-2">Account Created!</h3>
+               <p className="text-slate-500 font-medium">Registration successful. Redirecting you to login...</p>
             </div>
           ) : (
             <form onSubmit={handleRegister} className="space-y-5">

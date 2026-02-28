@@ -3,12 +3,19 @@ import { X, FileText, ChevronRight, Copy, Check, Eye, Code } from 'lucide-react'
 import Simulator from './Simulator';
 import toast from 'react-hot-toast';
 
-const FileViewerModal = ({ isOpen, onClose, files }) => {
+const WorkspaceViewer = ({ files }) => {
   const [selectedFile, setSelectedFile] = useState(Object.keys(files || {})[0]);
   const [copied, setCopied] = useState(false);
-  const [viewMode, setViewMode] = useState('code'); // 'code' or 'simulator'
+  const [viewMode, setViewMode] = useState('simulator'); // Default to simulator
 
-  if (!isOpen || !files) return null;
+  if (!files || Object.keys(files).length === 0) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-slate-400">
+         <FileText size={48} className="mb-4 opacity-20" />
+         <p>No extension files to display.</p>
+      </div>
+    );
+  }
 
   const fileList = Object.keys(files);
   const currentContent = files[selectedFile] || '';
@@ -21,13 +28,7 @@ const FileViewerModal = ({ isOpen, onClose, files }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
-      <div 
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
-      <div className="glass-card w-full max-w-6xl h-[80vh] flex flex-col bg-white overflow-hidden relative z-10 shadow-2xl border-white/20">
+      <div className="w-full h-full flex flex-col bg-white overflow-hidden shadow-2xl relative z-10 border-l border-slate-200">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white/50">
           <div className="flex items-center gap-6">
@@ -61,13 +62,6 @@ const FileViewerModal = ({ isOpen, onClose, files }) => {
                </button>
             </div>
           </div>
-
-          <button 
-            onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
-          >
-            <X size={20} />
-          </button>
         </div>
 
         {/* Content Area */}
@@ -112,14 +106,13 @@ const FileViewerModal = ({ isOpen, onClose, files }) => {
               </div>
             </>
           ) : (
-            <div className="flex-1 p-8 bg-slate-50">
+            <div className="flex-1 bg-slate-50">
                <Simulator files={files} />
             </div>
           )}
         </div>
       </div>
-    </div>
   );
 };
 
-export default FileViewerModal;
+export default WorkspaceViewer;

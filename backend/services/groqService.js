@@ -7,7 +7,7 @@ const groq = process.env.GROQ_API_KEY && process.env.GROQ_API_KEY !== 'your_groq
     ? new Groq({ apiKey: process.env.GROQ_API_KEY })
     : null;
 
-export const generateExtension = async (prompt) => {
+export const generateExtension = async (prompt, previousFiles = null) => {
     if (!groq) {
         console.warn('GROQ_API_KEY not found or using placeholder. Returning mock extension.');
         return {
@@ -45,10 +45,23 @@ Example Output:
 }
 `;
 
+    let userContent = prompt;
+    if (previousFiles) {
+        userContent = `
+PREVIOUS EXTENSION FILES:
+${JSON.stringify(previousFiles, null, 2)}
+
+USER FOLLOW-UP INSTRUCTIONS:
+${prompt}
+
+Please apply these instructions to the previous files and return the FULL, UPDATED JSON object representing the entire extension. Do not just return the diff.
+`;
+    }
+
     const response = await groq.chat.completions.create({
         messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: prompt }
+            { role: 'user', content: userContent }
         ],
         model: 'llama-3.3-70b-versatile',
         response_format: { type: 'json_object' }

@@ -2,15 +2,15 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MessageSquare, Plus, Search, Loader2, User, LogOut, Settings, Zap, Book, Globe } from 'lucide-react';
 
-const Sidebar = ({ history, onSelectChat, activeChatId, loading, user, onLogout }) => {
+const Sidebar = ({ history, onSelectChat, activeChatId, loading, user, onLogout, isOpen = true }) => {
   const navigate = useNavigate();
   const username = user?.profile?.username || user?.email?.split('@')[0] || 'User';
   const initials = username.substring(0, 2).toUpperCase();
 
   return (
-    <div className="w-80 h-screen flex flex-col bg-white/70 border-r border-slate-200 backdrop-blur-md relative z-[50]">
+    <div className={`${isOpen ? 'w-80 border-r' : 'w-0 border-r-0'} transition-all duration-300 ease-in-out h-screen flex flex-col bg-white/70 border-slate-200 backdrop-blur-md relative z-[50] overflow-hidden shrink-0`}>
       {/* Header */}
-      <div className="p-6">
+      <div className="p-6 shrink-0 w-80">
         <div 
           onClick={() => {
             onSelectChat(null);
@@ -28,8 +28,8 @@ const Sidebar = ({ history, onSelectChat, activeChatId, loading, user, onLogout 
         </div>
       </div>
 
-      {/* Search & History omitted for brevity, but kept in full file */}
-      <div className="px-6 pb-4">
+      {/* Search */}
+      <div className="px-6 pb-4 shrink-0 w-80">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input 
@@ -40,7 +40,7 @@ const Sidebar = ({ history, onSelectChat, activeChatId, loading, user, onLogout 
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-2">
+      <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-2 w-80 shrink-0">
         <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">
           Platform
         </div>
@@ -106,7 +106,7 @@ const Sidebar = ({ history, onSelectChat, activeChatId, loading, user, onLogout 
       </div>
 
       {/* User Footer */}
-      <div className="p-4 border-t border-slate-200/50 bg-white/30 space-y-2">
+      <div className="p-4 border-t border-slate-200/50 bg-white/30 space-y-2 shrink-0 w-80">
         <Link 
           to="/dashboard/profile"
           className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/60 transition-all group"

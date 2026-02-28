@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 
 const Layout = ({ children, user, history, onSelectChat, activeChatId, onLogout, loadingHistory }) => {
+  const location = useLocation();
+  const isWorkspace = location.pathname === '/dashboard';
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!isWorkspace);
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       {/* Sidebar */}
@@ -11,14 +15,17 @@ const Layout = ({ children, user, history, onSelectChat, activeChatId, onLogout,
         onSelectChat={onSelectChat} 
         activeChatId={activeChatId}
         loading={loadingHistory}
+        user={user}
+        onLogout={onLogout}
+        isOpen={isSidebarOpen}
       />
 
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 relative overflow-hidden">
-        <Navbar user={user} onLogout={onLogout} />
+        <Navbar user={user} onLogout={onLogout} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} isSidebarOpen={isSidebarOpen} />
         
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
-          <div className="max-w-5xl mx-auto h-full">
+        <main className={`flex-1 overflow-y-auto ${isWorkspace ? 'p-0' : 'p-6 md:p-8'}`}>
+          <div className={`${isWorkspace ? 'w-full h-full' : 'max-w-5xl mx-auto h-full'}`}>
             {children}
           </div>
         </main>

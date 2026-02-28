@@ -53,26 +53,56 @@ export const getPublicChats = async (req, res) => {
 };
 
 export const generate = async (req, res) => {
-    const { prompt } = req.body;
+    const { prompt, previousFiles, chatId } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
 
     try {
-        console.log(`Generating extension for: ${prompt}`);
-        const files = await generateExtension(prompt);
+        console.log(`Generating extension for: ${prompt}${chatId ? ' (Update)' : ''}`);
+        const files = await generateExtension(prompt, previousFiles);
         
-        // Save to Supabase (Table: chats)
-        const { data, error } = await supabase
-            .from('chats')
-            .insert([
-                { 
-                    user_id: req.user.id, 
-                    prompt, 
-                    files, 
-                    title: prompt.substring(0, 30) + (prompt.length > 30 ? '...' : '') 
-                }
-            ])
-            .select()
-            .single();
+        let data, error;
+
+        if (chatId) {
+            // Update existing chat
+            console.log(`Updating existing chat: ${chatId}`);
+            
+            // First fetch existing format to append prompt correctly
+            const { data: existingChat, error: fetchErr } = await supabase
+                .from('chats')
+                .select('prompt')
+                .eq('id', chatId)
+                .eq('user_id', req.user.id)
+                .single();
+                
+            if (fetchErr) throw fetchErr;
+
+            const updatedPrompt = existingChat.prompt + '\n\n---\n\nFollow-up: ' + prompt;
+
+            ({ data, error } = await supabase
+                .from('chats')
+                .update({ 
+                    files,
+                    prompt: updatedPrompt
+                })
+                .eq('id', chatId)
+                .eq('user_id', req.user.id)
+                .select()
+                .single());
+        } else {
+            // Create new chat
+            ({ data, error } = await supabase
+                .from('chats')
+                .insert([
+                    { 
+                        user_id: req.user.id, 
+                        prompt, 
+                        files, 
+                        title: prompt.substring(0, 30) + (prompt.length > 30 ? '...' : '') 
+                    }
+                ])
+                .select()
+                .single());
+        }
 
         if (error) throw error;
         res.json(data);
