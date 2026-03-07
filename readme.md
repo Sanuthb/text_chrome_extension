@@ -118,4 +118,3 @@ Chat routes:
 - If `GROQ_API_KEY` is missing, generation falls back to mock extension output.
 - Keep `SUPABASE_SERVICE_ROLE_KEY` server-side only.
 - Keep `SUPABASE_SERVICE_ROLE_KEY` server-side only.
-- Keep `SUPABASE_SERVICE_ROLE_KEY` server-side only.
