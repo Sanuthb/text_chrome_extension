@@ -66,12 +66,11 @@ export const generate = async (req, res) => {
             // Update existing chat
             console.log(`Updating existing chat: ${chatId}`);
             
-            // First fetch existing format to append prompt correctly
+            // Allow update if user is owner OR if they have the ID (Collaborative)
             const { data: existingChat, error: fetchErr } = await supabase
                 .from('chats')
-                .select('prompt')
+                .select('prompt, user_id')
                 .eq('id', chatId)
-                .eq('user_id', req.user.id)
                 .single();
                 
             if (fetchErr) throw fetchErr;
@@ -85,9 +84,9 @@ export const generate = async (req, res) => {
                     prompt: updatedPrompt
                 })
                 .eq('id', chatId)
-                .eq('user_id', req.user.id)
                 .select()
                 .single());
+
         } else {
             // Create new chat
             ({ data, error } = await supabase
@@ -120,8 +119,8 @@ export const downloadChat = async (req, res) => {
             .from('chats')
             .select('*')
             .eq('id', req.params.id)
-            .eq('user_id', req.user.id)
             .single();
+
 
         if (error || !chat) return res.status(404).json({ error: 'Chat not found' });
 
@@ -164,8 +163,8 @@ export const getChat = async (req, res) => {
             .from('chats')
             .select('*')
             .eq('id', req.params.id)
-            .eq('user_id', req.user.id)
             .single();
+
 
         if (error || !data) return res.status(404).json({ error: 'Chat not found' });
         res.json(data);
@@ -196,8 +195,8 @@ export const auditChat = async (req, res) => {
             .from('chats')
             .select('files')
             .eq('id', req.params.id)
-            .eq('user_id', req.user.id)
             .single();
+
 
         if (error || !chat) {
             console.error('Audit failed: Chat not found', error);
@@ -227,8 +226,8 @@ export const getStoreListing = async (req, res) => {
             .from('chats')
             .select('prompt, files')
             .eq('id', req.params.id)
-            .eq('user_id', req.user.id)
             .single();
+
 
         if (error || !chat) {
             console.error('Store listing failed: Chat not found', error);
