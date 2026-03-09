@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+
 import { Mail, Lock, Loader2, Sparkles, Zap, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -9,20 +10,24 @@ const LoginPage = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || '/dashboard';
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      await axios.post('http://localhost:5000/api/auth/login', { 
-        email, 
-        password 
+      await axios.post('http://localhost:5000/api/auth/login', {
+        email,
+        password
       }, { withCredentials: true });
-      
+
       toast.success('Welcome back!');
       onLoginSuccess();
-      navigate('/dashboard');
+      navigate(from);
+
     } catch (err) {
       toast.error(err.response?.data?.error || 'Authentication failed. Please check your credentials.');
     } finally {

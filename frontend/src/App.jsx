@@ -14,6 +14,9 @@ import GalleryPage from './pages/GalleryPage';
 import Generator from './components/Generator';
 import { Loader2 } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+
+
 
 function App() {
   const [user, setUser] = useState(null);
@@ -89,7 +92,7 @@ function App() {
       <Routes>
         {/* Landing Page */}
         <Route path="/" element={user ? <Navigate to="/dashboard" /> : <LandingPage />} />
-        
+
         {/* Auth Pages */}
         <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <LoginPage onLoginSuccess={checkAuth} />} />
         <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <RegisterPage />} />
@@ -97,40 +100,49 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Dashboard - Using wildcard for sub-routes to prevent flickering */}
-        <Route 
-          path="/dashboard/*" 
+        <Route
+          path="/dashboard/*"
           element={
             user ? (
-              <Layout 
-                user={user} 
-                history={history} 
-                onSelectChat={handleSelectChat} 
+              <Layout
+                user={user}
+                history={history}
+                onSelectChat={handleSelectChat}
                 activeChatId={activeChat?.id}
                 onLogout={handleLogout}
                 loadingHistory={loadingHistory}
               >
                 <Routes>
                   <Route index element={
-                    <Generator 
-                      activeChat={activeChat} 
-                      onGenerationComplete={fetchHistory} 
+                    <Generator
+                      activeChat={activeChat}
+                      onGenerationComplete={fetchHistory}
                       initialPrompt={templatePrompt}
                     />
                   } />
+                  <Route path="project/:id" element={
+                    <ProjectLoader
+                      history={history}
+                      onSelectChat={handleSelectChat}
+                      activeChat={activeChat}
+                      onGenerationComplete={fetchHistory}
+                    />
+                  } />
+
                   <Route path="profile" element={<ProfilePage user={user} onUpdate={checkAuth} />} />
                   <Route path="templates" element={
-                    <TemplatesPage 
+                    <TemplatesPage
                       onSelectTemplate={(prompt) => {
                         handleSelectTemplate(prompt);
                         // Navigation handled in TemplatesPage or via index redirect
-                      }} 
+                      }}
                     />
                   } />
                   <Route path="gallery" element={
-                    <GalleryPage 
+                    <GalleryPage
                       onRemix={(prompt) => {
                         handleSelectTemplate(prompt);
-                      }} 
+                      }}
                     />
                   } />
                   <Route path="docs" element={<DocumentationPage />} />
@@ -138,15 +150,51 @@ function App() {
                 </Routes>
               </Layout>
             ) : (
-              <Navigate to="/login" />
+              <Navigate to="/login" state={{ from: window.location.pathname }} />
             )
-          } 
+
+          }
         />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>
+  );
+}
+
+function ProjectLoader({ history, onSelectChat, activeChat, onGenerationComplete }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadChat = async () => {
+      if (id && (!activeChat || activeChat.id !== id)) {
+        const chatInHistory = history.find(h => h.id === id);
+        if (chatInHistory) {
+          onSelectChat(chatInHistory);
+        } else {
+          // Fetch from API if not in history (Collaborative share)
+          try {
+            const res = await axios.get(`http://localhost:5000/api/chats/history/${id}`, { withCredentials: true });
+            onSelectChat(res.data);
+          } catch (err) {
+            console.error('Failed to load shared project', err);
+            // Optionally navigate back to dashboard
+            navigate('/dashboard');
+          }
+        }
+      }
+    };
+    loadChat();
+  }, [id, history, activeChat, onSelectChat, navigate]);
+
+
+  return (
+    <Generator
+      activeChat={activeChat}
+      onGenerationComplete={onGenerationComplete}
+    />
   );
 }
 
